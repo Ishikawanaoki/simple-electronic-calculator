@@ -1,0 +1,98 @@
+
+options
+{
+  static = false;
+}
+PARSER_BEGIN(Parser)
+package algo2_report;
+import java.awt.event.*;
+import java.math.BigDecimal;
+class Parser {
+   private ActionListener listener;
+    public void setActionListener(ActionListener a)
+    {
+      
+          listener = a;
+      }
+     private void output(BigDecimal value){
+          listener.actionPerformed(new ActionEvent(this,
+                               ActionEvent.ACTION_PERFORMED,
+                               value.toPlainString() ));
+      }
+}
+PARSER_END(Parser)
+TOKEN : {
+    <NUM : ["1"-"9"]<DIGIT>
+    | <DIGIT>"."<DIGIT>
+    | <DIGIT>
+    | <DIGIT>"."
+    | "."<DIGIT>
+    >
+ |<PREVIOUS : "$">
+ |  <PLUSOP : "+" >
+ |  <MINUS : "-" >
+ |  <MULOP : "*" >
+ |  <DIV : "/" >
+ |  <EQOP : "=" >
+ |  <#DIGIT : (["0"-"9"])+ >
+}
+SKIP : {
+    " " | "\n" | "\r" | "t"
+}
+public Node start(BigDecimal previous) :
+{
+    Node root;
+}
+{
+    root=sum(previous)  
+    <EQOP> { output(root.getValue());
+			return root;
+		   }
+}
+public Node sum(BigDecimal previous) :
+{
+    Node root, node;
+}
+{
+    root=prod(previous)  
+    ( <PLUSOP> node=prod(previous) {
+        root = Op.connectToLeft(root);
+		root.setOp('+');
+		root.addRight(node);
+       }
+     | <MINUS> node=prod(previous)
+        {
+        root = Op.connectToLeft(root);
+		root.setOp('-');
+		root.addRight(node);
+       }
+    )* { return root; }
+}
+private Node prod(BigDecimal previous) :
+{
+	Node node, root;
+}
+{
+    root=atai(previous)
+  ( <MULOP> node=atai(previous) {
+       	root = Op.connectToLeft(root);
+		root.setOp('*');
+		root.addRight(node);
+     }
+   | <DIV> node=atai(previous) {
+                root = Op.connectToLeft(root);
+		root.setOp('/');
+		root.addRight(node);
+     }
+   )* { return root; }
+}
+private Node atai(BigDecimal previous) :
+{ 
+  Token token;
+}
+{
+  token=<NUM> { return new Num(new BigDecimal(token.image)); }
+| <MINUS> token=<NUM> { return new Num(new BigDecimal("-"+token.image)); }
+| <PREVIOUS> { return new Num(previous); }
+}
+
